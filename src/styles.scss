@@ -1,0 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-neutral-950 text-neutral-100 antialiased;
+}
+
+::selection {
+  background: rgb(var(--detalle-400) / 0.35);
+  color: #fff;
+}
+
+/* Foco visible para quien navega con teclado (sin anillo al hacer clic con el mouse). */
+:focus-visible {
+  outline: 2px solid rgb(var(--acento-400));
+  outline-offset: 3px;
+}
+
+/* La fuente de títulos solo tiene pesos 600 a 900: sin negritas falsas del navegador. */
+.font-display {
+  font-synthesis: none;
+}
+
+/* En celular, Safari hace zoom al tocar un campo con letra menor a 16 px: todos los campos van a 16 px
+   (menos los que ya usan letra más grande, como el del código del SMS). */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.letra-grande),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Con sesión iniciada, en celulares angostos la barra muestra solo el sello y deja espacio a "Mis reservas". */
+@media (max-width: 430px) {
+  .marca-compacta .marca-texto {
+    display: none;
+  }
+  .marca-compacta {
+    padding-right: 0.25rem;
+  }
+}
+
+/* Sin el destello gris al tocar en Android/iOS (los botones ya tienen su propio estado). */
+a, button, [role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  /* Formularios (checkout y panel) */
+  .etiqueta {
+    @apply block text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 mb-2;
+  }
+  .campo {
+    @apply w-full bg-neutral-950/70 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600
+      focus:outline-none focus:border-acento-500/70 focus:ring-1 focus:ring-acento-500/40 transition-colors;
+  }
+  .campo-error {
+    @apply border-red-500/60;
+  }
+  .texto-error {
+    @apply block text-xs font-semibold text-red-400 mt-1.5;
+  }
+
+  /* Rótulo de sección: "01 — Servicios" */
+  .rotulo {
+    @apply inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-detalle-400 sm:tracking-[0.32em];
+  }
+  .rotulo::before {
+    content: attr(data-num);
+    @apply font-display text-sm tracking-normal text-acento-500;
+  }
+  /* La línea final solo cuando hay espacio: en celular el rótulo puede ocupar dos líneas. */
+  .rotulo::after {
+    content: '';
+    @apply hidden h-px w-10 bg-gradient-to-r from-detalle-400/70 to-transparent sm:block;
+  }
+
+  /* Enlaces de texto con zona táctil cómoda (44 px de alto en celular, sin cambiar cómo se ven). */
+  .enlace-toque {
+    @apply inline-flex min-h-11 items-center gap-2 sm:min-h-0;
+  }
+
+  /* Botones de la marca */
+  .boton-oro {
+    @apply relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full bg-acento-500 px-7 py-3.5
+      text-sm font-extrabold text-sobre-acento shadow-lg shadow-acento-500/20 transition-all duration-300
+      hover:-translate-y-0.5 hover:bg-acento-400 hover:shadow-acento-500/40 active:translate-y-0;
+  }
+  /* Brillo que cruza el botón al pasar el mouse */
+  .boton-oro::after {
+    content: '';
+    @apply pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/40 opacity-0 transition-none;
+  }
+  .boton-oro:hover::after {
+    @apply opacity-100;
+    left: 130%;
+    transition: left 0.75s ease, opacity 0.2s;
+  }
+  .boton-linea {
+    @apply inline-flex items-center justify-center gap-2.5 rounded-full border border-white/15 px-7 py-3.5 text-sm font-bold text-white
+      transition-all duration-300 hover:border-detalle-400/60 hover:bg-white/[0.04];
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Texto con degradado del color de acento y un brillo que lo recorre */
+  .texto-brillo {
+    background-image: linear-gradient(
+      100deg,
+      rgb(var(--acento-600)) 20%,
+      rgb(var(--detalle-200)) 45%,
+      rgb(var(--acento-600)) 70%
+    );
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: brillo 6s ease-in-out infinite;
+  }
+
+  /* Dorado metálico para titulares grandes */
+  .texto-oro {
+    background-image: linear-gradient(
+      100deg,
+      rgb(var(--detalle-200)) 0%,
+      rgb(var(--acento-400)) 28%,
+      #fff7e3 46%,
+      rgb(var(--acento-500)) 64%,
+      rgb(var(--acento-700)) 100%
+    );
+    background-size: 220% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: brillo 9s ease-in-out infinite;
+  }
+
+  /* Entrada del titular: se enfoca y sube; luego queda el brillo. (El degradado con
+     background-clip no se pinta en letras animadas por separado: por eso va la palabra entera.) */
+  .texto-oro.entrada {
+    animation: enfocar 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both, brillo 9s ease-in-out 1.6s infinite;
+  }
+
+  /* Solo el contorno de las letras */
+  .texto-contorno {
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(var(--detalle-400) / 0.22);
+  }
+
+  /* Tarjeta translúcida sobre fondo oscuro */
+  .vidrio {
+    @apply bg-white/[0.03] border border-white/10 backdrop-blur-xl;
+  }
+
+  /* Grano de película (textura de estudio) */
+  .grano {
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Luz dorada que sigue al mouse (directiva appLuz pone --luz-x y --luz-y) */
+  .luz {
+    background: radial-gradient(
+      var(--luz-tamano, 620px) circle at var(--luz-x, 28%) var(--luz-y, 42%),
+      rgb(var(--acento-500) / var(--luz-fuerza, 0.16)),
+      transparent 62%
+    );
+  }
+
+  /* Borde que se ilumina donde está el mouse (tarjetas) */
+  .borde-luz {
+    position: relative;
+    isolation: isolate;
+  }
+  .borde-luz::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      380px circle at var(--luz-x, 50%) var(--luz-y, 0%),
+      rgb(var(--detalle-300) / 0.75),
+      rgb(255 255 255 / 0.08) 45%,
+      rgb(255 255 255 / 0.06)
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Bordes suaves a los lados de una marquesina */
+  .desvanecer-lados {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+}
+
+@keyframes brillo {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+@keyframes enfocar {
+  from { opacity: 0; filter: blur(16px); transform: translateY(6%); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+
+/* Aparición al hacer scroll (directiva appRevelar) */
+.revelar {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--retraso, 0ms);
+}
+.revelar.revelado {
+  opacity: 1;
+  transform: none;
+}
+
+/* Acercamiento lento de una imagen de fondo */
+@keyframes zoom-lento {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+.animar-zoom-lento {
+  animation: zoom-lento 18s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revelar { opacity: 1; transform: none; transition: none; }
+  .texto-brillo, .texto-oro, .texto-oro.entrada, .animar-zoom-lento { animation: none; }
+  .animate-desfile, .animate-girar, .animate-latido { animation: none !important; }
+  .boton-oro::after { display: none; }
+  html { scroll-behavior: auto; }
+}

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /barbero
+Disallow: /mis-citas
+Disallow: /mis-pedidos
+Disallow: /login
+Disallow: /tienda/pagar
+Disallow: /tienda/pedido/
+Disallow: /tienda/pago-simulado/

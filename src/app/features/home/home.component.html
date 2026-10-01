@@ -1,0 +1,425 @@
+<!-- ============ HERO ============ -->
+<section appLuz class="relative isolate -mt-[5.5rem] flex min-h-[100svh] flex-col overflow-hidden pt-[5.5rem]">
+  <div class="absolute inset-0 -z-20 bg-neutral-950"></div>
+  <div class="luz absolute inset-0 -z-10 transition-[background] duration-300"></div>
+  <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_60%_at_100%_0%,rgb(var(--detalle-300)/0.07),transparent_60%)]"></div>
+  <div class="grano absolute inset-0 -z-10"></div>
+  <!-- Líneas finas de encuadre -->
+  <div class="pointer-events-none absolute inset-x-5 top-[5.5rem] bottom-24 -z-10 hidden rounded-[2.5rem] border border-white/[0.05] lg:block"></div>
+
+  <div class="mx-auto grid w-full max-w-7xl flex-1 items-center gap-10 px-5 py-8 sm:px-8 sm:py-12 lg:grid-cols-[1fr_auto] lg:py-6">
+    <div>
+      <p class="rotulo animate-in fade-in duration-700" data-num="—"><span>Barbería &amp; Tattoo</span>@if (cliente.ubicacion; as u) {<span class="hidden sm:inline">· {{ u.zona }}</span>}</p>
+
+      <h1 class="mt-5 font-display font-black uppercase leading-[0.8] tracking-[0.015em] text-[clamp(5.2rem,33vw,15.5rem)]">
+        <span class="sr-only">{{ cliente.nombre }}: </span>
+        <span class="texto-oro entrada inline-block pb-[0.04em]">{{ cliente.marca.texto }}</span>
+      </h1>
+
+      <p class="mt-4 max-w-2xl text-balance font-acento text-[clamp(1.65rem,3.5vw,2.75rem)] italic leading-[1.1] text-detalle-200 animate-in fade-in slide-in-from-bottom-3 duration-1000 delay-500 fill-mode-both">
+        {{ cliente.hero.titulo }} <span class="text-white">{{ cliente.hero.tituloDestacado }}</span>
+      </p>
+      <p class="mt-5 max-w-xl text-base leading-relaxed text-neutral-400 sm:text-lg animate-in fade-in duration-1000 delay-700 fill-mode-both">{{ cliente.hero.subtitulo }}</p>
+
+      <div class="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row animate-in fade-in slide-in-from-bottom-3 duration-1000 delay-700 fill-mode-both">
+        <a routerLink="/reservar" class="boton-oro !px-8 !py-4 !text-base">
+          Reservar turno
+          <app-icono nombre="flecha" class="h-5 w-5" [grosor]="2" />
+        </a>
+        @if (whatsappTattoo) {
+          <a [href]="whatsappTattoo" target="_blank" rel="noopener" class="boton-linea !px-8 !py-4 !text-base">
+            <app-icono nombre="maquina" class="h-5 w-5 text-acento-400" />
+            Cotizar tatuaje
+          </a>
+        } @else {
+          <a routerLink="/servicios" class="boton-linea !px-8 !py-4 !text-base">Ver servicios</a>
+        }
+      </div>
+
+      <!-- Estado en vivo -->
+      <p class="mt-7 inline-flex items-center gap-3 rounded-full sm:mt-8 border border-white/10 bg-white/[0.03] py-2 pl-3 pr-4 text-sm text-neutral-300 animate-in fade-in duration-1000 delay-1000 fill-mode-both" role="status">
+        <span class="relative flex h-2.5 w-2.5">
+          @if (estado().abierto) {
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
+          }
+          <span class="relative inline-flex h-2.5 w-2.5 rounded-full" [ngClass]="estado().abierto ? 'bg-emerald-400' : 'bg-neutral-500'"></span>
+        </span>
+        {{ estado().texto }}
+      </p>
+    </div>
+
+    <app-sello class="mx-auto hidden w-[19rem] xl:w-[23rem] lg:block animate-in fade-in zoom-in-95 duration-1000 delay-300 fill-mode-both" />
+  </div>
+
+  <!-- Cinta inferior -->
+  <div class="border-y border-white/[0.07] bg-black/30 py-5 backdrop-blur-sm">
+    <app-marquesina [items]="cinta" [duracion]="45" />
+  </div>
+</section>
+
+<!-- ============ 01 · SERVICIOS ============ -->
+@let destacados = serviciosDestacados$ | async;
+@if (destacados === null || destacados.length > 0) {
+  <section id="servicios" class="scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl">
+      <div class="mb-10 sm:mb-12 grid items-end gap-6 lg:grid-cols-2" appRevelar>
+        <div>
+          <p class="rotulo" data-num="01">Servicios</p>
+          <h2 class="mt-4 font-display text-5xl font-black uppercase leading-[0.9] text-white sm:text-7xl">
+            El menú <span class="font-acento text-[0.9em] font-normal normal-case italic text-detalle-300">de la casa</span>
+          </h2>
+        </div>
+        <p class="max-w-md text-neutral-400 lg:justify-self-end">Todos incluyen diagnóstico técnico y asesoría personalizada. Elige uno y reserva en menos de un minuto.</p>
+      </div>
+
+      <ul class="border-t border-white/10" appRevelar [retraso]="120">
+        @if (destacados === null) {
+          @for (i of [1, 2, 3, 4]; track i) {
+            <li class="h-[104px] animate-pulse border-b border-white/10 bg-white/[0.015]"></li>
+          }
+        } @else {
+          @for (servicio of destacados; track servicio.id; let i = $index) {
+            <li class="border-b border-white/10">
+              <button type="button" (click)="irAReservar(servicio)"
+                      class="group relative isolate grid w-full grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 gap-y-1 overflow-hidden px-2 py-6 text-left sm:px-4 lg:grid-cols-[3.5rem_minmax(0,1.1fr)_minmax(0,1.4fr)_6.5rem_8.5rem_2.5rem] lg:py-7">
+                <!-- Relleno dorado que sube al pasar el mouse -->
+                <span class="absolute inset-0 -z-10 origin-bottom scale-y-0 bg-acento-500 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-y-100"></span>
+                <span class="font-display text-lg font-bold text-acento-500 transition-colors group-hover:text-sobre-acento/70">{{ (i + 1).toString().padStart(2, '0') }}</span>
+                <span class="font-display text-2xl font-extrabold uppercase leading-none tracking-wide text-white transition-all duration-500 group-hover:translate-x-1 group-hover:text-sobre-acento sm:text-[1.9rem]">{{ servicio.nombre }}</span>
+                <span class="text-right font-display text-xl font-extrabold text-white transition-colors group-hover:text-sobre-acento lg:hidden">{{ servicio.precio | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                <span class="col-span-2 col-start-2 line-clamp-2 text-sm leading-relaxed text-neutral-400 transition-colors group-hover:text-sobre-acento/80 lg:col-span-1 lg:col-start-auto">{{ servicio.descripcion }}</span>
+                <span class="hidden items-center gap-1.5 text-sm font-semibold text-neutral-400 transition-colors group-hover:text-sobre-acento/80 lg:flex">
+                  <app-icono nombre="reloj" class="h-4 w-4" />{{ servicio.duracionMinutos | duracion }}
+                </span>
+                <span class="hidden text-right lg:block">
+                  <span class="block text-[11px] font-extrabold uppercase tracking-widest text-neutral-500 transition-colors group-hover:text-sobre-acento/60">{{ servicio.precioDesde ? 'Desde' : 'Precio' }}</span>
+                  <span class="font-display text-2xl font-extrabold text-white transition-colors group-hover:text-sobre-acento">{{ servicio.precio | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                </span>
+                <span class="hidden h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white transition-all duration-500 group-hover:-rotate-45 group-hover:border-sobre-acento/30 group-hover:text-sobre-acento lg:flex">
+                  <app-icono nombre="flecha" class="h-4 w-4" [grosor]="2" />
+                </span>
+              </button>
+            </li>
+          }
+        }
+      </ul>
+
+      <div class="mt-10 flex flex-wrap items-center justify-between gap-4" appRevelar>
+        <p class="text-sm text-neutral-500">Toca un servicio para reservarlo.</p>
+        <a routerLink="/servicios" class="enlace-toque group text-sm font-bold text-neutral-200 transition-colors hover:text-white">
+          Ver el menú completo
+          <app-icono nombre="flecha" class="h-4 w-4 transition-transform group-hover:translate-x-1" [grosor]="2" />
+        </a>
+      </div>
+    </div>
+  </section>
+}
+
+<!-- ============ 02 · BARBERÍA Y TATTOO ============ -->
+<section id="tattoo" class="scroll-mt-24 px-5 pb-16 sm:px-8 sm:pb-24 lg:pb-32" [class.pt-16]="destacados?.length === 0">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-10 sm:mb-12" appRevelar>
+      <p class="rotulo" data-num="02">Dos oficios</p>
+      <h2 class="mt-4 max-w-3xl font-display text-5xl font-black uppercase leading-[0.9] text-white sm:text-7xl">
+        Un mismo estudio, <span class="block font-acento text-[0.9em] font-normal normal-case italic text-detalle-300">el mismo detalle</span>
+      </h2>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-2">
+      <!-- Barbería -->
+      <article appLuz appRevelar class="borde-luz group flex flex-col overflow-hidden rounded-[2rem] bg-white/[0.025] p-6 sm:p-10">
+        <div class="luz pointer-events-none absolute inset-0 -z-10 rounded-[inherit] [--luz-fuerza:0.10] [--luz-tamano:420px]"></div>
+        <div class="flex items-start justify-between gap-6">
+          <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-acento-500/10 text-acento-400 ring-1 ring-acento-500/20">
+            <app-icono nombre="tijeras" class="h-7 w-7" />
+          </span>
+          @if (resumenServicios(); as r) {
+            <span class="text-right text-xs font-semibold text-neutral-400">{{ r.cantidad }} servicios<br><span class="text-white">desde {{ r.desde | currency:'COP':'symbol-narrow':'1.0-0' }}</span></span>
+          }
+        </div>
+        <p class="mt-8 text-[11px] font-extrabold uppercase tracking-[0.3em] text-detalle-400">Barbería</p>
+        <h3 class="mt-2 font-display text-4xl font-black uppercase leading-none text-white sm:text-5xl">Precisión en cada corte</h3>
+        <p class="mt-4 max-w-md leading-relaxed text-neutral-400">Cortes, barba y limpieza facial con diagnóstico técnico y asesoría de imagen. Eliges barbero, servicio y hora, y la agenda se actualiza al instante.</p>
+        <ul class="mt-7 flex flex-wrap gap-2">
+          @for (punto of ['Diagnóstico técnico', 'Asesoría de imagen', 'Reserva en línea']; track punto) {
+            <li class="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-semibold text-neutral-300">{{ punto }}</li>
+          }
+        </ul>
+        <div class="mt-auto pt-10">
+          <a routerLink="/reservar" class="boton-oro">
+            Reservar en línea <app-icono nombre="flecha" class="h-4 w-4" [grosor]="2" />
+          </a>
+        </div>
+      </article>
+
+      <!-- Tattoo -->
+      @if (cliente.tatuajes; as tatuajes) {
+        <article appLuz appRevelar [retraso]="120" class="borde-luz group relative flex flex-col overflow-hidden rounded-[2rem] bg-white/[0.025] p-6 sm:p-10">
+          <div class="luz pointer-events-none absolute inset-0 -z-10 rounded-[inherit] [--luz-fuerza:0.10] [--luz-tamano:420px]"></div>
+          <div aria-hidden="true" class="pointer-events-none absolute -right-4 -top-8 select-none font-display text-[8rem] font-black uppercase leading-none texto-contorno sm:-right-6 sm:-top-10 sm:text-[11rem]">INK</div>
+          <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-acento-500/10 text-acento-400 ring-1 ring-acento-500/20">
+            <app-icono nombre="maquina" class="h-7 w-7" />
+          </span>
+          <p class="mt-8 text-[11px] font-extrabold uppercase tracking-[0.3em] text-detalle-400">Tattoo</p>
+          <h3 class="mt-2 font-display text-4xl font-black uppercase leading-none text-white sm:text-5xl">{{ tatuajes.titulo }}</h3>
+          <p class="mt-4 max-w-md leading-relaxed text-neutral-400">{{ tatuajes.descripcion }}</p>
+          <ol class="mt-7 space-y-3">
+            @for (paso of tatuajes.pasos; track paso.titulo; let i = $index) {
+              <li class="flex gap-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-detalle-400/40 font-display text-sm font-bold text-detalle-300">{{ i + 1 }}</span>
+                <span class="text-sm leading-relaxed text-neutral-400"><strong class="font-bold text-white">{{ paso.titulo }}.</strong> {{ paso.texto }}</span>
+              </li>
+            }
+          </ol>
+          @if (whatsappTattoo) {
+            <div class="mt-auto pt-10">
+              <a [href]="whatsappTattoo" target="_blank" rel="noopener" class="boton-linea">
+                <app-red-social red="whatsapp" class="h-4 w-4 text-emerald-400" />
+                Cotizar por WhatsApp
+              </a>
+            </div>
+          }
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · FUNDADOR ============ -->
+@if (cliente.fundador; as fundador) {
+  <section id="fundador" class="relative scroll-mt-24 overflow-hidden border-y border-white/[0.07] bg-gradient-to-b from-white/[0.02] to-transparent px-5 py-16 sm:px-8 sm:py-24 lg:py-28">
+    <div class="grano absolute inset-0"></div>
+    <div class="relative mx-auto grid max-w-7xl items-center gap-8 sm:gap-12 lg:grid-cols-[auto_1fr] lg:gap-20">
+      <app-sello appRevelar class="mx-auto w-44 sm:w-72 lg:w-80" [texto]="fundador.rol.toUpperCase() + ' · ' + cliente.marca.texto + ' · ' + fundador.rol.toUpperCase() + ' · ' + cliente.marca.texto + ' · '" />
+      <div appRevelar [retraso]="120">
+        <p class="rotulo" data-num="03">{{ fundador.rol }}</p>
+        <h2 class="mt-4 font-display text-5xl font-black uppercase leading-[0.9] text-white sm:text-7xl">
+          @if (fundador.nombre) { {{ fundador.nombre }} } @else { Detrás de <span class="block font-acento text-[0.9em] font-normal normal-case italic text-detalle-300 sm:inline">cada corte</span> }
+        </h2>
+        @if (fundador.frase) {
+          <blockquote class="mt-6 max-w-xl border-l-2 border-acento-500/60 pl-5 font-acento text-2xl italic leading-snug text-detalle-200">“{{ fundador.frase }}”</blockquote>
+        } @else {
+          <p class="mt-6 max-w-xl text-lg leading-relaxed text-neutral-400">Conoce el trabajo del {{ fundador.rol }} de {{ cliente.nombre }}: cortes, barbas y tatuajes, publicados en su Instagram.</p>
+        }
+        <div class="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a [href]="'https://www.instagram.com/' + fundador.instagram" target="_blank" rel="noopener" class="boton-oro">
+            <app-red-social red="instagram" class="h-4 w-4" />
+            &#64;{{ fundador.instagram }}
+          </a>
+          <a [href]="cliente.instagram.url" target="_blank" rel="noopener" class="boton-linea">
+            &#64;{{ cliente.instagram.usuario }}
+            <app-icono nombre="externo" class="h-4 w-4 text-neutral-500" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+}
+
+<!-- ============ TIENDA ============ -->
+@if (ajustes().tienda.activa && vitrina().length > 0) {
+  <section class="relative px-5 py-16 sm:px-8 sm:py-24">
+    <div class="mx-auto max-w-7xl">
+      <div class="mb-10 sm:mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end" appRevelar>
+        <div>
+          <p class="rotulo" data-num="—">Tienda</p>
+          <h2 class="mt-4 font-display text-5xl font-black uppercase leading-[0.9] text-white sm:text-6xl">Llévate el acabado <span class="font-acento font-normal normal-case italic text-detalle-300">a casa</span></h2>
+          @if (cliente.tienda?.aliada; as aliada) {
+            <p class="mt-4 max-w-xl text-neutral-400">Productos oficiales <strong class="text-white">{{ aliada.nombre }}</strong>, los mismos que usamos en cada servicio.</p>
+          }
+        </div>
+        <a routerLink="/tienda" class="enlace-toque group text-sm font-bold text-neutral-200 transition-colors hover:text-white">
+          Ver toda la tienda <app-icono nombre="flecha" class="h-4 w-4 transition-transform group-hover:translate-x-1" [grosor]="2" />
+        </a>
+      </div>
+      <div class="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
+        @for (producto of vitrina(); track producto.id; let i = $index) {
+          <div appRevelar [retraso]="i * 100">
+            <app-producto-card [producto]="producto" (ver)="seleccionado.set($event)" (agregar)="agregar($event)" />
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+  @if (seleccionado(); as p) {
+    <app-producto-detalle [producto]="p" (cerrar)="seleccionado.set(null)" />
+  }
+}
+
+<!-- ============ EQUIPO ============ -->
+@if (cliente.equipo.length > 0) {
+  <section id="equipo" class="scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24">
+    <div class="mx-auto max-w-5xl">
+      <div class="mb-14 text-center" appRevelar>
+        <p class="rotulo" data-num="—">El equipo</p>
+        <h2 class="mt-4 font-display text-5xl font-black uppercase text-white sm:text-6xl">Manos expertas</h2>
+      </div>
+      <div class="mx-auto grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
+        @for (miembro of cliente.equipo; track miembro.nombre; let i = $index) {
+          <div appRevelar [retraso]="i * 150" class="group relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-white/10 bg-neutral-900">
+            @if (miembro.foto) {
+              <div class="absolute inset-0" [style.transform]="'scale(' + (miembro.fotoZoom ?? 1) + ')'" [style.transform-origin]="miembro.fotoPosicion ?? 'center'">
+                <img [src]="miembro.foto" [alt]="miembro.nombre" [style.object-position]="miembro.fotoPosicion ?? 'center'" loading="lazy" class="h-full w-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0">
+              </div>
+            } @else {
+              <div class="absolute inset-0 flex items-center justify-center pb-24">
+                <span class="font-display text-[7rem] font-black leading-none text-white/10">{{ iniciales(miembro.nombre) }}</span>
+              </div>
+            }
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6">
+              <span class="mb-3 inline-block rounded-md bg-detalle-400 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-neutral-950">{{ miembro.rol }}</span>
+              <h3 class="font-display text-3xl font-black uppercase leading-tight text-white">{{ miembro.nombre }}</h3>
+              @if (miembro.instagram) {
+                <a [href]="'https://www.instagram.com/' + miembro.instagram" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-2 text-sm font-bold text-neutral-300 hover:text-white">
+                  <app-red-social red="instagram" class="h-4 w-4" /> &#64;{{ miembro.instagram }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+}
+
+<!-- ============ CURSOS ============ -->
+@if (ajustes().cursos; as cursos) {
+  @if (cursos.activo && cursos.url) {
+    <section class="px-5 py-16 sm:px-8 sm:py-24">
+      <div appRevelar class="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-acento-500/10 via-transparent to-transparent px-8 py-14 sm:px-14">
+        <span class="inline-flex rounded-full border border-detalle-400/30 bg-detalle-500/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-detalle-200">Academia</span>
+        <h2 class="mt-6 max-w-2xl font-display text-4xl font-black uppercase leading-none text-white sm:text-5xl">{{ cursos.titulo }}</h2>
+        @if (cursos.descripcion) { <p class="mt-5 max-w-2xl text-lg leading-relaxed text-neutral-300">{{ cursos.descripcion }}</p> }
+        <a [href]="cursos.url" target="_blank" rel="noopener" class="boton-oro mt-9">{{ cursos.textoBoton || 'Ver cursos' }} <app-icono nombre="externo" class="h-4 w-4" [grosor]="2" /></a>
+      </div>
+    </section>
+  }
+}
+
+<!-- ============ 04 · GALERÍA ============ -->
+<app-video-gallery id="galeria" class="block scroll-mt-24"></app-video-gallery>
+
+<!-- ============ RESEÑAS (solo reales) ============ -->
+@if (cliente.resenas; as resenas) {
+  <section class="border-y border-white/[0.07] px-5 py-16 sm:px-8 sm:py-24">
+    <div class="mx-auto max-w-7xl">
+      <div class="mb-10 sm:mb-12 text-center" appRevelar>
+        <p class="rotulo" data-num="—">Reseñas</p>
+        <h2 class="mt-4 font-display text-5xl font-black uppercase text-white">Lo que dicen nuestros clientes</h2>
+        <p class="mt-3 text-neutral-400"><span class="font-bold text-acento-400">{{ resenas.calificacion }}</span> en Google</p>
+      </div>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+        @for (resena of resenas.items; track resena.autor; let i = $index) {
+          <div appRevelar [retraso]="i * 100" class="vidrio rounded-3xl p-6">
+            <div class="mb-4 flex gap-0.5 text-acento-500">@for (e of estrellas; track e) { <app-icono nombre="estrella" [relleno]="true" class="h-4 w-4" /> }</div>
+            <p class="leading-relaxed text-neutral-300">“{{ resena.texto }}”</p>
+            <p class="mt-4 text-sm font-bold text-white">{{ resena.autor }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+}
+
+<!-- ============ 05 · VISÍTANOS ============ -->
+<section id="contacto" class="scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-10 sm:mb-12 grid items-end gap-6 lg:grid-cols-2" appRevelar>
+      <div>
+        <p class="rotulo" data-num="05">Visítanos</p>
+        <h2 class="mt-4 font-display text-5xl font-black uppercase leading-[0.9] text-white sm:text-7xl">
+          Te esperamos <span class="block font-acento text-[0.9em] font-normal normal-case italic text-detalle-300">en {{ cliente.ubicacion?.zona?.split(',')?.[0] ?? 'el estudio' }}</span>
+        </h2>
+      </div>
+      @if (cliente.ubicacion; as ubicacion) {
+        <p class="max-w-md text-neutral-400 lg:justify-self-end">{{ ubicacion.nombre }} · {{ ubicacion.direccion }}</p>
+      }
+    </div>
+
+    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Mapa -->
+      @if (cliente.ubicacion; as ubicacion) {
+        <div appRevelar class="relative flex flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-neutral-900 md:col-span-2 lg:row-span-2">
+          <div class="relative h-[300px] sm:h-[460px] lg:h-full lg:min-h-[520px]">
+            <!-- El filtro oscurece el mapa de Google para que combine con la página -->
+            <iframe [src]="mapaEmbed" class="absolute inset-0 h-full w-full border-0 [filter:invert(0.9)_hue-rotate(180deg)_saturate(0.55)_brightness(0.95)_sepia(0.15)]"
+                    allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" [title]="'Mapa de ' + ubicacion.nombre"></iframe>
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 bg-gradient-to-t from-neutral-950/90 to-transparent sm:block"></div>
+          </div>
+          <div class="flex flex-col gap-3 border-t border-white/10 bg-neutral-950 p-4 sm:absolute sm:inset-x-4 sm:bottom-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-2xl sm:border sm:bg-neutral-950/85 sm:backdrop-blur-xl">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-acento-500/15 text-acento-400"><app-icono nombre="pin" class="h-5 w-5" /></span>
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-bold text-white">{{ ubicacion.nombre }}</p>
+                  <p class="truncate text-xs text-neutral-400">{{ ubicacion.direccion }}</p>
+                </div>
+              </div>
+              <a [href]="ubicacion.mapaUrl" target="_blank" rel="noopener noreferrer" class="boton-oro shrink-0 !py-3 sm:!py-2.5">
+                Cómo llegar <app-icono nombre="externo" class="h-4 w-4" [grosor]="2" />
+              </a>
+          </div>
+        </div>
+      }
+
+      <!-- Horario -->
+      <div appRevelar [retraso]="120" class="rounded-[2rem] border border-white/10 bg-white/[0.025] p-5 sm:p-7">
+        <div class="mb-5 flex items-center justify-between gap-3">
+          <h3 class="font-display text-2xl font-extrabold uppercase tracking-wide text-white">Horario</h3>
+          <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold"
+                [ngClass]="estado().abierto ? 'bg-emerald-500/10 text-emerald-300' : 'bg-white/5 text-neutral-400'">
+            <span class="h-1.5 w-1.5 rounded-full" [ngClass]="estado().abierto ? 'bg-emerald-400 animate-latido' : 'bg-neutral-500'"></span>
+            {{ estado().abierto ? 'Abierto' : 'Cerrado' }}
+          </span>
+        </div>
+        <ul class="space-y-1">
+          @for (fila of semana; track fila.dia) {
+            <li class="flex items-center justify-between rounded-xl px-3 py-2 text-sm"
+                [ngClass]="fila.dia === estado().dia ? 'bg-acento-500/10 ring-1 ring-acento-500/25' : ''">
+              <span [ngClass]="fila.dia === estado().dia ? 'font-bold text-white' : 'text-neutral-400'">{{ fila.nombre }}@if (fila.dia === estado().dia) { <span class="ml-1.5 text-[11px] font-extrabold uppercase tracking-widest text-acento-400">Hoy</span> }</span>
+              <span class="font-semibold" [ngClass]="fila.abierto ? 'text-neutral-200' : 'text-neutral-500'">{{ fila.horas }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Contacto -->
+      <div appRevelar [retraso]="240" class="flex flex-col rounded-[2rem] border border-white/10 bg-white/[0.025] p-5 sm:p-7">
+        <h3 class="font-display text-2xl font-extrabold uppercase tracking-wide text-white">Escríbenos</h3>
+        <p class="mt-2 text-sm text-neutral-400">Dudas, cambios o cotizaciones de tatuajes.</p>
+        <div class="mt-6 flex flex-col gap-3">
+          @if (whatsapp) {
+            <a [href]="whatsapp" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3.5 transition-colors hover:border-emerald-400/40 hover:bg-emerald-400/[0.04]">
+              <app-red-social red="whatsapp" class="h-5 w-5 text-emerald-400" />
+              <span class="flex-1 text-sm font-bold text-white">WhatsApp</span>
+              <app-icono nombre="externo" class="h-4 w-4 text-neutral-500" />
+            </a>
+          }
+          <a [href]="cliente.instagram.url" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3.5 transition-colors hover:border-pink-400/40 hover:bg-pink-400/[0.04]">
+            <app-red-social red="instagram" class="h-5 w-5 text-pink-400" />
+            <span class="flex-1 text-sm font-bold text-white">&#64;{{ cliente.instagram.usuario }}</span>
+            <app-icono nombre="externo" class="h-4 w-4 text-neutral-500" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CIERRE ============ -->
+<section appLuz class="relative isolate overflow-hidden border-t border-white/[0.07] px-5 py-20 sm:px-8 sm:py-28 lg:py-36">
+  <div class="luz absolute inset-0 -z-10 [--luz-x:50%] [--luz-y:60%] [--luz-tamano:700px]"></div>
+  <div class="grano absolute inset-0 -z-10"></div>
+  <div class="relative mx-auto max-w-4xl text-center" appRevelar>
+    <img [src]="cliente.logo" alt="" class="mx-auto mb-8 h-16 w-16 opacity-90">
+    <h2 class="font-display text-6xl font-black uppercase leading-[0.85] text-white sm:text-8xl">
+      Tu próximo corte <span class="block font-acento text-[0.75em] font-normal normal-case italic text-detalle-200">empieza aquí.</span>
+    </h2>
+    <p class="mx-auto mt-6 max-w-xl text-lg text-neutral-400">Elige tu barbero, tu servicio y tu hora. Te confirmamos al instante.</p>
+    <div class="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+      <a routerLink="/reservar" class="boton-oro !px-10 !py-4 !text-base">Reservar turno <app-icono nombre="flecha" class="h-5 w-5" [grosor]="2" /></a>
+      @if (whatsapp) {
+        <a [href]="whatsapp" target="_blank" rel="noopener" class="boton-linea !px-8 !py-4 !text-base"><app-red-social red="whatsapp" class="h-4 w-4 text-emerald-400" /> Escribir por WhatsApp</a>
+      }
+    </div>
+  </div>
+</section>

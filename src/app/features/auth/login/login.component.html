@@ -1,0 +1,210 @@
+<div class="flex min-h-screen flex-col bg-neutral-950 md:flex-row">
+
+  <!-- Mitad izquierda: la marca -->
+  <div appLuz class="relative isolate hidden overflow-hidden border-r border-white/[0.07] md:flex md:w-[45%] md:flex-col md:items-center md:justify-center lg:w-1/2">
+    <div class="luz absolute inset-0 -z-10 [--luz-x:50%] [--luz-y:45%] [--luz-tamano:560px]"></div>
+    <div class="grano absolute inset-0 -z-10"></div>
+    <app-sello class="w-72 lg:w-96" />
+    <p class="mt-10 font-display text-6xl font-black uppercase tracking-[0.06em] text-white lg:text-7xl">{{ cliente.marca.texto }}</p>
+    @if (cliente.marca.subtitulo) {
+      <p class="mt-2 font-acento text-2xl italic text-detalle-300">{{ cliente.marca.subtitulo }}</p>
+    }
+    <p class="mt-8 max-w-sm px-6 text-center text-neutral-400">Tus reservas en un solo lugar: agenda, cambia o cancela tu turno cuando quieras.</p>
+  </div>
+
+  <!-- Mitad derecha: ingresar -->
+  <div class="relative flex min-h-screen w-full items-center justify-center px-6 pb-10 pt-24 sm:p-12 md:min-h-0 md:w-[55%] lg:w-1/2">
+    <a routerLink="/" class="absolute left-4 top-4 flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-bold text-neutral-500 transition-all duration-300 hover:-translate-x-1 hover:text-white md:left-10 md:top-10">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      Volver al inicio
+    </a>
+
+    <div class="w-full max-w-md">
+      <div class="mb-10 text-center md:hidden">
+        <span class="text-4xl text-white"><app-marca claseLogo="w-14 h-14" [conSubtitulo]="true" /></span>
+      </div>
+
+      @switch (paso) {
+
+        <!-- ============ Elegir cómo entrar ============ -->
+        @case ('metodos') {
+          <div class="mb-8 text-center">
+            <p class="rotulo justify-center" data-num="—">Acceso</p>
+            <h1 class="mt-4 font-display text-5xl font-black uppercase leading-[0.9] text-white">Ingresa <span class="font-acento text-[0.9em] font-normal normal-case italic text-detalle-300">y reserva</span></h1>
+            <p class="mt-4 text-neutral-400">
+              @if (acceso.telefono || acceso.correo) {
+                Entra con Google o con un código, sin contraseñas que recordar.
+              } @else {
+                Entra con tu cuenta de Google: es rápido, seguro y no tienes que recordar otra contraseña.
+              }
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <button (click)="conGoogle()" [disabled]="!!ocupado" class="group flex w-full items-center justify-center gap-4 rounded-2xl bg-white px-6 py-4 font-extrabold text-neutral-800 transition-all duration-300 hover:bg-neutral-100 hover:shadow-lg hover:shadow-white/10 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+              <!-- Logo de Google en línea (no se descarga de otro sitio) -->
+              <svg class="h-6 w-6 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+                <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A11.9 11.9 0 0 1 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+                <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+              </svg>
+              <span class="text-[15px] tracking-wide">{{ ocupado === 'google' ? 'Abriendo Google…' : 'Continuar con Google' }}</span>
+            </button>
+
+            @if (acceso.apple) {
+              <button (click)="conApple()" [disabled]="!!ocupado" class="group flex w-full items-center justify-center gap-4 rounded-2xl border border-white/20 bg-black px-6 py-4 font-extrabold text-white transition-all duration-300 hover:border-white/40 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+                <!-- Logo de Apple en línea -->
+                <svg class="h-6 w-6 -translate-y-px transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+                <span class="text-[15px] tracking-wide">{{ ocupado === 'apple' ? 'Abriendo Apple…' : 'Continuar con Apple' }}</span>
+              </button>
+            }
+          </div>
+
+          @if (acceso.telefono || acceso.correo) {
+            <div class="my-7 flex items-center gap-4">
+              <div class="h-px flex-1 bg-white/10"></div>
+              <span class="text-[11px] font-black uppercase tracking-widest text-neutral-500">o con un código</span>
+              <div class="h-px flex-1 bg-white/10"></div>
+            </div>
+
+            @if (acceso.telefono && acceso.correo) {
+              <div role="tablist" aria-label="Forma de recibir el código" class="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+                <button type="button" role="tab" [attr.aria-selected]="metodo === 'telefono'" (click)="cambiarMetodo('telefono')"
+                        class="flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors"
+                        [class]="metodo === 'telefono' ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-white'">
+                  <app-icono nombre="celular" class="h-4 w-4" [grosor]="1.8" /> Celular
+                </button>
+                <button type="button" role="tab" [attr.aria-selected]="metodo === 'correo'" (click)="cambiarMetodo('correo')"
+                        class="flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors"
+                        [class]="metodo === 'correo' ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-white'">
+                  <app-icono nombre="correo" class="h-4 w-4" [grosor]="1.8" /> Correo
+                </button>
+              </div>
+            }
+
+            @if (metodo === 'telefono' && acceso.telefono) {
+              <form (ngSubmit)="enviarSms()" novalidate class="space-y-3">
+                <label for="celular" class="etiqueta">Tu celular</label>
+                <div class="flex items-stretch overflow-hidden rounded-xl border border-white/10 bg-neutral-950/70 transition-colors focus-within:border-acento-500/70 focus-within:ring-1 focus-within:ring-acento-500/40">
+                  <span class="flex items-center border-r border-white/10 px-4 text-sm font-bold text-neutral-300" aria-label="Indicativo de Colombia">+57</span>
+                  <input id="celular" name="celular" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14"
+                         placeholder="300 123 4567" [(ngModel)]="celular" (input)="aviso = ''"
+                         class="w-full min-w-0 bg-transparent px-4 py-3.5 text-white placeholder:text-neutral-600 focus:outline-none">
+                </div>
+                <button type="submit" [disabled]="!!ocupado" class="boton-oro w-full disabled:cursor-wait disabled:opacity-70">
+                  {{ ocupado === 'sms' ? 'Enviando código…' : 'Enviarme un código por SMS' }}
+                </button>
+              </form>
+            }
+
+            @if (metodo === 'correo' && acceso.correo) {
+              <form (ngSubmit)="enviarEnlace()" novalidate class="space-y-3">
+                <label for="correo" class="etiqueta">Tu correo</label>
+                <input id="correo" name="correo" type="email" inputmode="email" autocomplete="email" maxlength="120"
+                       placeholder="tucorreo@ejemplo.com" [(ngModel)]="correo" (input)="aviso = ''" class="campo">
+                <button type="submit" [disabled]="!!ocupado" class="boton-oro w-full disabled:cursor-wait disabled:opacity-70">
+                  {{ ocupado === 'enlace' ? 'Enviando enlace…' : 'Enviarme un enlace de acceso' }}
+                </button>
+                <p class="text-center text-xs text-neutral-500">Te llega un enlace al correo para entrar sin contraseña.</p>
+              </form>
+            }
+          }
+        }
+
+        <!-- ============ Código del SMS ============ -->
+        @case ('codigo') {
+          <button type="button" (click)="volverAMetodos()" class="enlace-toque mb-6 text-sm font-bold text-neutral-400 hover:text-white">
+            <app-icono nombre="flecha" class="h-4 w-4 rotate-180" [grosor]="2" /> Cambiar número
+          </button>
+          <h1 class="font-display text-4xl font-black uppercase leading-none text-white">Escribe el código</h1>
+          <p class="mt-3 text-neutral-400">Lo enviamos por SMS al <strong class="whitespace-nowrap text-white">+57 {{ formatoCelular(celular) }}</strong>.</p>
+
+          <form (ngSubmit)="verificarCodigo()" novalidate class="mt-7 space-y-3">
+            <label for="codigo-sms" class="etiqueta">Código de 6 dígitos</label>
+            <input id="codigo-sms" name="codigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+                   placeholder="······" [(ngModel)]="codigo" (input)="aviso = ''"
+                   class="campo letra-grande text-center font-display text-3xl font-black tracking-[0.5em] placeholder:tracking-[0.5em]">
+            <button type="submit" [disabled]="!!ocupado" class="boton-oro w-full disabled:cursor-wait disabled:opacity-70">
+              {{ ocupado === 'codigo' ? 'Verificando…' : 'Entrar' }}
+            </button>
+          </form>
+          <button type="button" (click)="enviarSms()" [disabled]="esperaReenvio > 0 || !!ocupado"
+                  class="mt-4 min-h-11 w-full rounded-xl text-sm font-bold text-acento-400 transition-colors hover:text-acento-300 disabled:text-neutral-600">
+            {{ ocupado === 'sms' ? 'Enviando…' : esperaReenvio > 0 ? 'Reenviar código en ' + esperaReenvio + ' s' : 'Reenviar código' }}
+          </button>
+        }
+
+        <!-- ============ Enlace enviado al correo ============ -->
+        @case ('enlace-enviado') {
+          <div class="text-center">
+            <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-acento-500/30 bg-acento-500/10 text-acento-400">
+              <app-icono nombre="correo" class="h-7 w-7" [grosor]="1.6" />
+            </span>
+            <h1 class="mt-6 font-display text-4xl font-black uppercase leading-none text-white">Revisa tu correo</h1>
+            <p class="mt-4 text-neutral-400">Te enviamos un enlace a <strong class="break-all text-white">{{ correo }}</strong>. Ábrelo desde este mismo celular o computador para entrar.</p>
+            <p class="mt-3 text-sm text-neutral-500">Si no aparece en unos minutos, búscalo en Spam o Promociones.</p>
+          </div>
+          <div class="mt-8 flex flex-col gap-2 sm:flex-row">
+            <button type="button" (click)="enviarEnlace()" [disabled]="esperaReenvio > 0 || !!ocupado"
+                    class="boton-linea flex-1 disabled:cursor-default disabled:opacity-50">
+              {{ ocupado === 'enlace' ? 'Enviando…' : esperaReenvio > 0 ? 'Reenviar en ' + esperaReenvio + ' s' : 'Reenviar enlace' }}
+            </button>
+            <button type="button" (click)="volverAMetodos()" class="boton-linea flex-1">Usar otro correo</button>
+          </div>
+        }
+
+        <!-- ============ El enlace se abrió en otro navegador ============ -->
+        @case ('confirmar-correo') {
+          <h1 class="font-display text-4xl font-black uppercase leading-none text-white">Confirma tu correo</h1>
+          <p class="mt-3 text-neutral-400">Abriste el enlace en un navegador distinto al que lo pidió. Escribe el correo para terminar de entrar.</p>
+          <form (ngSubmit)="entrarConEnlace()" novalidate class="mt-7 space-y-3">
+            <label for="correo-confirmar" class="etiqueta">Tu correo</label>
+            <input id="correo-confirmar" name="correo" type="email" inputmode="email" autocomplete="email" maxlength="120"
+                   placeholder="tucorreo@ejemplo.com" [(ngModel)]="correo" (input)="aviso = ''" class="campo">
+            <button type="submit" [disabled]="!!ocupado" class="boton-oro w-full disabled:cursor-wait disabled:opacity-70">
+              {{ ocupado === 'enlace' ? 'Entrando…' : 'Entrar' }}
+            </button>
+          </form>
+        }
+
+        <!-- ============ Cuentas sin nombre (celular, correo y a veces Apple) ============ -->
+        @case ('nombre') {
+          <p class="rotulo" data-num="—">Último paso</p>
+          <h1 class="mt-4 font-display text-4xl font-black uppercase leading-none text-white">¿Cómo te llamas?</h1>
+          <p class="mt-3 text-neutral-400">Así te saludamos y te reconocen en la barbería.</p>
+          <form (ngSubmit)="guardarNombre()" novalidate class="mt-7 space-y-3">
+            <label for="nombre-perfil" class="etiqueta">Nombre y apellido</label>
+            <input id="nombre-perfil" name="nombre" type="text" autocomplete="name" maxlength="80" placeholder="Ej. Juan Pérez"
+                   [(ngModel)]="nombre" (input)="aviso = ''" class="campo">
+            <button type="submit" [disabled]="!!ocupado" class="boton-oro w-full disabled:cursor-wait disabled:opacity-70">
+              {{ ocupado === 'nombre' ? 'Guardando…' : 'Continuar' }}
+            </button>
+          </form>
+        }
+      }
+
+      @if (aviso) {
+        <p role="alert" class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{{ aviso }}</p>
+      }
+
+      <!-- reCAPTCHA invisible para los SMS (Firebase lo exige) -->
+      <div #recaptcha></div>
+
+      <div class="mt-10 flex items-center gap-4">
+        <div class="h-px flex-1 bg-white/10"></div>
+        <span class="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-neutral-500">
+          <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          Conexión segura
+        </span>
+        <div class="h-px flex-1 bg-white/10"></div>
+      </div>
+
+      <!-- Autorización de datos (Ley 1581 de 2012) -->
+      <p class="mt-8 px-4 text-center text-[11px] font-medium leading-relaxed text-neutral-500">
+        Al continuar autorizas el tratamiento de tus datos personales para gestionar tus reservas y pedidos, según nuestra
+        <a routerLink="/politica-de-datos" class="font-bold text-neutral-300 underline transition-colors hover:text-white">Política de tratamiento de datos</a>.
+      </p>
+    </div>
+  </div>
+</div>

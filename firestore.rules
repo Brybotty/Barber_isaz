@@ -1,0 +1,250 @@
+rules_version = '2';
+
+// Reglas de Isaza. Cada caso está probado en pruebas/reglas.mjs (npm run test:reglas).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Funciones reutilizables ----------
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function rolActual() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+    }
+
+    function isAdmin() {
+      return isAuth() && rolActual() == 'admin';
+    }
+
+    function isBarbero() {
+      return isAuth() && rolActual() == 'barbero';
+    }
+
+    function isStaff() {
+      return isAuth() && rolActual() in ['admin', 'barbero'];
+    }
+
+    // Cuenta que puede crearse a sí misma como admin en su primer inicio de sesión.
+    // Debe coincidir con adminEmail en src/app/config/clientes/*.ts.
+    function esEmailAdmin() {
+      return request.auth.token.email == 'ortizgonzalesbryanalexander1@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function soloCambia(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+    }
+
+    // Correo de la cuenta de Google que hace la petición (en minúsculas, como lo guarda la app).
+    function emailDeLaCuenta() {
+      return request.auth.token.email.lower();
+    }
+
+    // ---------- usuarios ----------
+    match /usuarios/{userId} {
+      function esPropio() {
+        return isAuth() && request.auth.uid == userId;
+      }
+
+      // Cada usuario lee su perfil; el admin lee todos (panel de usuarios).
+      allow read: if esPropio() || isAdmin();
+
+      function camposDePerfil() {
+        return request.resource.data.keys().hasOnly(['uid', 'nombre', 'email', 'rol', 'telefono', 'politicaAceptadaEn']);
+      }
+
+      // El email del perfil es siempre el de su cuenta: así nadie se hace pasar por otro (p. ej. un barbero).
+      function emailPropio() {
+        return !('email' in request.resource.data) || request.resource.data.email == emailDeLaCuenta();
+      }
+
+      // Primer inicio de sesión: siempre 'cliente', salvo la cuenta de admin configurada.
+      allow create: if isAdmin() || (
+        esPropio()
+        && camposDePerfil()
+        && emailPropio()
+        && request.resource.data.uid == userId
+        && (request.resource.data.rol == 'cliente'
+            || (request.resource.data.rol == 'admin' && esEmailAdmin()))
+      );
+
+      // Un usuario puede actualizar su nombre, celular y email (el de su cuenta), pero NUNCA su rol.
+      allow update: if isAdmin()
+        || (esPropio()
+            && camposDePerfil()
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'uid'])
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email']) || emailPropio()));
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- servicios (catálogo público) ----------
+    match /servicios/{servicioId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- barberos (perfiles públicos del staff) ----------
+    match /barberos/{barberoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- productos (tienda, catálogo público) ----------
+    match /productos/{productoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- ajustes (cursos, tienda, envíos y formas de pago) ----------
+    match /ajustes/{ajusteId} {
+      allow read: if true;
+      allow write: if isAdmin() && ajusteId == 'sitio';
+    }
+
+    // ---------- pedidos de la tienda (contienen datos personales) ----------
+    // Los crea y cancela la Cloud Function (precios, envío e inventario en una sola transacción),
+    // así el navegador no puede inventar precios ni saltarse el inventario.
+    match /pedidos/{pedidoId} {
+      // El cliente ve sus pedidos; el admin, todos.
+      allow read: if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if false;
+      // El admin avanza el estado y marca pagos en efectivo. Para cancelar usa la función (devuelve el stock).
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ---------- movimientos de inventario (historial, no se edita) ----------
+    match /movimientosInventario/{movimientoId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ---------- citas (contienen datos personales) ----------
+    match /citas/{citaId} {
+      function esDueno() {
+        return isAuth() && resource.data.userId == request.auth.uid;
+      }
+
+      // Solo los campos que guarda la app al reservar (nada de precioFinal ni otros extras).
+      function camposDeReserva() {
+        return request.resource.data.keys().hasOnly([
+            'userId', 'userName', 'userEmail', 'phone', 'servicioId', 'serviceName', 'precio', 'duracionMinutos',
+            'barberoId', 'barberoNombre', 'dia', 'hora', 'horaStr', 'fecha', 'estado', 'creadoEn', 'slotIds'])
+          && request.resource.data.keys().hasAll([
+            'userId', 'servicioId', 'serviceName', 'precio', 'duracionMinutos', 'barberoId', 'dia', 'hora', 'estado', 'slotIds']);
+      }
+
+      // Textos que escribe el cliente: con límite, para que nadie llene la agenda de basura.
+      function textosAcotados() {
+        let cita = request.resource.data;
+        return cita.get('userName', '') is string && cita.get('userName', '').size() <= 120
+          && cita.get('phone', '') is string && cita.get('phone', '').size() <= 25
+          && cita.get('barberoNombre', '') is string && cita.get('barberoNombre', '').size() <= 80
+          && cita.get('horaStr', '') is string && cita.get('horaStr', '').size() <= 12;
+      }
+
+      // Nombre, precio y duración salen del catálogo, no de lo que mande el navegador.
+      function coincideConServicio() {
+        let servicio = get(/databases/$(database)/documents/servicios/$(request.resource.data.servicioId)).data;
+        let duracion = servicio.get('duracionMinutos', 0);
+        return request.resource.data.serviceName == servicio.nombre
+          && request.resource.data.precio == servicio.precio
+          && (request.resource.data.duracionMinutos == duracion
+              || (duracion <= 0 && request.resource.data.duracionMinutos == 30));
+      }
+
+      // El barbero existe y el primer bloque es el de su día y hora (ID {barberoId}_{YYYY-MM-DD}_{HHmm}).
+      function bloquesCoherentes(id) {
+        let cita = request.resource.data;
+        return (cita.barberoId == 'cualquiera' || exists(/databases/$(database)/documents/barberos/$(cita.barberoId)))
+          && cita.dia.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && cita.hora.matches('^[0-9]{2}:[0-9]{2}$')
+          && cita.slotIds is list
+          && cita.slotIds.size() > 0
+          && cita.slotIds.size() <= 20
+          // Tantos bloques de 30 min como dura el servicio (una cita de 40 min ocupa 2).
+          && cita.duracionMinutos is int
+          && cita.slotIds.size() * 30 >= cita.duracionMinutos
+          && (cita.slotIds.size() - 1) * 30 < cita.duracionMinutos
+          && cita.slotIds[0] == cita.barberoId + '_' + cita.dia + '_' + cita.hora.replace(':', '')
+          && getAfter(/databases/$(database)/documents/slots/$(cita.slotIds[0])).data.citaId == id
+          && getAfter(/databases/$(database)/documents/slots/$(cita.slotIds[cita.slotIds.size() - 1])).data.citaId == id;
+      }
+
+      // La confirmación por correo solo puede ir a la cuenta de quien reserva (evita usarla para spam).
+      function correoPropio() {
+        let correo = request.resource.data.get('userEmail', '');
+        return correo == '' || (correo is string && correo.lower() == emailDeLaCuenta());
+      }
+
+      // El barbero solo gestiona sus citas: las del perfil de /barberos enlazado a su correo.
+      function esSuCita() {
+        return resource.data.barberoId == 'cualquiera'
+          || get(/databases/$(database)/documents/barberos/$(resource.data.barberoId)).data.get('emailAsociado', '') == emailDeLaCuenta();
+      }
+
+      // El cliente solo ve sus citas; el staff ve todas (agenda compartida).
+      allow read: if esDueno() || isStaff();
+
+      // La cita debe crearse en el mismo batch que sus bloques en /slots.
+      // Si un bloque ya existía, el batch falla y no hay doble reserva.
+      allow create: if isAdmin() || (
+        isAuth()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.estado == 'pendiente'
+        && camposDeReserva()
+        && textosAcotados()
+        && correoPropio()
+        && coincideConServicio()
+        && bloquesCoherentes(citaId)
+      );
+
+      allow update: if isAdmin()
+        // Barbero: solo cambia el estado (completar, no asistió, cancelar) y el valor cobrado al completar.
+        || (isBarbero() && esSuCita() && soloCambia(['estado', 'precioFinal'])
+            && request.resource.data.estado in ['confirmada', 'completada', 'no-asistio', 'cancelada']
+            && (!('precioFinal' in request.resource.data)
+                || (request.resource.data.precioFinal is number && request.resource.data.precioFinal >= 0)))
+        // Cliente: solo puede cancelar una cita suya que siga activa.
+        || (esDueno() && soloCambia(['estado'])
+            && request.resource.data.estado == 'cancelada'
+            && resource.data.estado in ['pendiente', 'confirmada']);
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- slots (bloques de 30 min ocupados; sin datos personales) ----------
+    // ID determinista: {barberoId}_{YYYY-MM-DD}_{HHmm}
+    match /slots/{slotId} {
+      function citaTrasEscritura(citaId) {
+        return getAfter(/databases/$(database)/documents/citas/$(citaId)).data;
+      }
+
+      // Cualquier usuario logueado puede consultar la disponibilidad.
+      allow read: if isAuth();
+
+      // Solo junto con la cita que lo reserva, y esa cita debe listar este bloque.
+      allow create: if isAdmin() || (
+        isAuth()
+        && request.resource.data.keys().hasOnly(['barberoId', 'dia', 'hora', 'citaId'])
+        && citaTrasEscritura(request.resource.data.citaId).userId == request.auth.uid
+        && slotId in citaTrasEscritura(request.resource.data.citaId).slotIds
+      );
+
+      // Nunca se sobrescribe un bloque: escribir sobre uno existente es una doble reserva.
+      allow update: if false;
+
+      // Se libera al cancelar la cita (dueño o barbero) o por el admin.
+      allow delete: if isAdmin() || (
+        isAuth()
+        && citaTrasEscritura(resource.data.citaId).estado == 'cancelada'
+        && (isBarbero() || citaTrasEscritura(resource.data.citaId).userId == request.auth.uid)
+      );
+    }
+
+    // Cualquier otra colección queda cerrada (no hace falta escribirlo: lo que no se permite, se niega).
+  }
+}
